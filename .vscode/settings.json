@@ -1,0 +1,5 @@
+{
+    "chat.utilityModel": "openai/o4-mini",
+    "chat.utilitySmallModel": "openai/gpt-4.1",
+    "github.copilot.chat.agent.autoFix": true
+}

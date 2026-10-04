@@ -1,0 +1,11 @@
+-- Fase 4: canal de e-mail (SMTP) nas configuracoes de notificacao
+ALTER TABLE notification_settings
+  ADD COLUMN IF NOT EXISTS email_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS smtp_host TEXT,
+  ADD COLUMN IF NOT EXISTS smtp_port INT DEFAULT 587,
+  ADD COLUMN IF NOT EXISTS smtp_secure BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS smtp_user TEXT,
+  ADD COLUMN IF NOT EXISTS smtp_password TEXT,
+  ADD COLUMN IF NOT EXISTS smtp_from TEXT,
+  ADD COLUMN IF NOT EXISTS notify_disbursement_email BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS notify_mora_alerts BOOLEAN NOT NULL DEFAULT TRUE;

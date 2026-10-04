@@ -1,0 +1,568 @@
+================================================================================
+DOCUMENTAÇÃO DO SISTEMA — MICROFINANCE / GESTÃO DE MICROCRÉDITOS
+================================================================================
+
+SUMÁRIO
+  1. DASHBOARD (Painel Normal)
+  2. CLIENTES
+  3. CRÉDITOS
+  4. ADMINISTRAÇÃO
+  5. PARAMETRIZAÇÃO
+  6. CONFIGURAÇÕES
+  7. FINANCEIRO
+  8. TESOURARIA
+  9. CARTEIRAS
+  10. RISCO
+  11. AUDITORIA
+  12. COMPLIANCE
+  13. NOTIFICAÇÕES
+  14. RELATÓRIOS
+  15. CONTABILIDADE
+  16. CONCILIAÇÃO
+  17. ADMIN (Painel Central de Empresas)
+  18. SHARED (Partilhado)
+
+
+================================================================================
+1. DASHBOARD (Painel Normal)
+================================================================================
+
+pasta: src/app/pages/dashboard/
+ficheiro: DashboardPage.tsx
+
+Função:
+  - Página inicial do sistema após login.
+  - Apresenta indicadores principais do utilizador (KPIs, gráficos, resumo).
+  - Acesso rápido às funcionalidades mais usadas.
+  - Visão geral do estado da empresa (carteira, pedidos, desembolsos).
+
+
+================================================================================
+2. CLIENTES
+================================================================================
+
+pasta: src/app/pages/clients/
+ficheiro: ClientsPage.tsx
+
+Função:
+  - Gestão completa de clientes (Singular, Grupo, Empresa).
+  - Cadastro de clientes com dados pessoais/documentos (BI, NUITE, etc).
+  - Visualização, edição e pesquisa de clientes.
+  - Histórico de créditos por cliente.
+  - Estado civil, género, morada, contactos.
+  - Suporte a clientes do tipo Grupo com múltiplos membros.
+
+
+================================================================================
+3. CRÉDITOS
+================================================================================
+
+pasta: src/app/pages/credits/
+
+3.1 Pedidos (PedidosPage.tsx)
+  - Registo e acompanhamento de solicitações de crédito.
+  - Criação de novos pedidos com seleção de cliente, tipo, prazo, taxa, frequência.
+  - Suporte a créditos Singulares, Grupos e Empresas.
+  - Fluxo completo do pedido (Rascunho → Pendente → Análise → Aprovação → Autorização → Desembolso).
+  - Pipeline visual com indicadores de estado.
+  - Expansão de detalhes (+, botão esquerdo) com valores de cada etapa.
+  - Validação: bloqueia novo pedido se cliente já tiver pedido ativo.
+  - Ordenação: pedidos mais recentes aparecem primeiro.
+  - Barra de pesquisa com filtro por nome de cliente e estado.
+  - Permite cancelar pedidos em rascunho ou pendente.
+
+3.2 Análise (AnalisePage.tsx)
+  - Revisão de pedidos pendentes e em análise.
+  - Aprova ou rejeita pedidos de crédito.
+  - Regista observações da análise.
+  - Filtra apenas pedidos em estado "pendente" ou "em_analise".
+
+3.3 Aprovação (AprovacaoPage.tsx)
+  - Gestão da etapa de aprovação de créditos.
+  - Define valor aprovado (pode diferir do solicitado).
+  - Regista data e valor da aprovação.
+
+3.4 Autorização (AutorizacaoPage.tsx)
+  - Etapa de autorização após aprovação.
+  - Define valor autorizado.
+  - Regista data e valor da autorização.
+
+3.5 Desembolso (DesembolsoPage.tsx)
+  - Processamento do desembolso do crédito aprovado/autorizado.
+  - Regista valor desembolsado e data.
+  - Marca pedido como "liberado" após desembolso.
+
+3.6 Estado do Crédito (EstadoCreditoPage.tsx)
+  - Acompanhamento do estado atual de cada crédito.
+  - Visualização do saldo devedor.
+  - Histórico de pagamentos e amortizações.
+
+3.7 Simulador (SimulatorPage.tsx)
+  - Simulação de crédito com cálculo de prestação (PRICE ou SAC).
+  - Frequências: Mensal, Quinzenal, Semanal, Diária.
+  - Gera PDF com: cabeçalho (dados da empresa), resumo (valor solicitado, prestação, juros, total),
+    tabela de plano de pagamento, e rodapé (endereço, telefone, email, data de impressão).
+  - Permite exportar PDF e imprimir.
+
+3.8 Plano de Pagamento (PlanoDePagPage.tsx)
+  - Visualização detalhada do plano de amortização de um crédito.
+  - Tabela com parcela, vencimento, capital, juros, prestação e saldo devedor.
+
+3.9 LoansPage.tsx
+  - (ficheiro na pasta credits/) — Gestão geral de empréstimos.
+
+
+================================================================================
+4. ADMINISTRAÇÃO
+================================================================================
+
+pasta: src/app/pages/administration/
+
+4.1 Utilizadores (UtilizadoresPage.tsx)
+  - Gestão de utilizadores do sistema.
+  - Criar, editar, desativar utilizadores.
+  - Associar utilizadores a perfis e departamentos.
+
+4.2 Perfis (PerfisPage.tsx)
+  - Gestão de perfis de acesso.
+  - Definição de papéis (admin, gestor, operador, etc).
+  - Controlo de permissões por perfil.
+
+4.3 Permissões (PermissoesPage.tsx)
+  - Definição granular de permissões.
+  - Mapeamento de funcionalidades por perfil.
+  - Estrutura de permissões do sistema (ex: solicitar.credito, analisar.credito, etc).
+
+4.4 Departamentos (DepartamentosPage.tsx)
+  - Gestão de departamentos da empresa.
+  - Organização hierárquica da empresa.
+
+
+================================================================================
+5. PARAMETRIZAÇÃO
+================================================================================
+
+pasta: src/app/pages/parametrization/
+
+5.1 Produtos de Crédito (ProdutosCreditoPage.tsx)
+  - Configuração de tipos/produtos de crédito (Consumo, Negócio, etc).
+  - Definição de regras por produto.
+
+5.2 Taxas (TaxasPage.tsx)
+  - Gestão de taxas de juros praticadas.
+  -percentagens por tipo de produto/período.
+
+5.3 Penalizações (PenalizacoesPage.tsx)
+  - Configuração de penalizações por atraso.
+  - Regras de mora e juros de mora.
+
+5.4 Limites (LimitesPage.tsx)
+  - Definição de limites de crédito por cliente/produto.
+  - Controlo de exposição.
+
+5.5 Calendário Financeiro (CalendarioFinanceiroPage.tsx)
+  - Configuração de feriados e dias úteis.
+  - Calendário de vencimentos.
+
+
+================================================================================
+6. CONFIGURAÇÕES
+================================================================================
+
+pasta: src/app/pages/settings/
+
+6.1 Empresa (EmpresaPage.tsx)
+  - Dados da empresa logada (sincronizados com Central de Empresas).
+  - Campos: nome, nome legal, NUIT, telefone, email, endereço, dados do proprietário, logo.
+  - Edição disponível apenas para administradores (permissão: alterar.configuracoes.sistema).
+  - Qualquer alteração reflete automaticamente no sistema todo.
+
+6.2 Sistema (SistemaPage.tsx)
+  - Configurações globais do sistema.
+  - Parâmetros de autenticação (MFA, timeout de sessão, política de passwords).
+  - Configurações de privacidade (mascaramento de dados sensíveis).
+  - Preferências de segurança.
+
+6.3 Integrações (IntegracoesPage.tsx)
+  - Configuração de integrações externas.
+  - Gestão de conectores para APIs externas.
+
+6.4 Segurança (SegurancaPage.tsx)
+  - Configurações de segurança avançadas.
+  - Controlo de acesso e autenticação.
+
+6.5 Backup (BackupPage.tsx)
+  - Gestão de backups do sistema.
+
+
+================================================================================
+7. FINANCEIRO
+================================================================================
+
+pasta: src/app/pages/finance/
+
+7.1 FinancePage.tsx
+  - Página principal do módulo financeiro.
+  - Visão geral das operações financeiras.
+
+7.2 Fluxo de Caixa (FluxoCaixaPage.tsx)
+  - Controlo de entradas e saídas de caixa.
+  - Projeção de fluxo de caixa.
+
+7.3 Tesouraria (TesourariaPage.tsx)
+  - Gestão de contas e movimentos de tesouraria.
+  - Controlo de saldos.
+
+7.4 Contabilidade (ContabilidadePage.tsx)
+  - Registo contável das operações.
+  - Plano de contas e lançamentos.
+
+
+================================================================================
+8. OPERAÇÕES
+================================================================================
+
+pasta: src/app/pages/operations/
+
+8.1 AbatesPage.tsx
+  - Gestão de abates/abatimentos sobre créditos.
+
+8.2 CapitalizaçãoPage.tsx
+  - Capitalização de juros.
+
+8.3 ExtornosPage.tsx
+  - Estorno de transações.
+
+8.4 MoraPage.tsx
+  - Gestão de mora/juros de mora.
+
+8.5 ReembolsosPage.tsx
+  - Processamento de reembolsos.
+
+8.6 ReestruturacaoPage.tsx
+  - Reestruturação de créditos.
+
+8.7 ReimbursementsPage.tsx
+  - (Reembolsos — alternativa/complementar).
+
+
+================================================================================
+9. CARTEIRAS
+================================================================================
+
+pasta: src/app/pages/portfolios/
+
+9.1 PortfoliosPage.tsx
+  - Visão geral das carteiras de crédito.
+  - Gestão de carteiras ativas.
+
+9.2 CarteirasAtivasPage.tsx
+  - Detalhe de carteiras ativas.
+
+9.3 SegmentacaoPage.tsx
+  - Segmentação de clientes/carteiras.
+
+9.4 TransferenciasPage.tsx
+  - Transferências entre carteiras.
+
+
+================================================================================
+10. RISCO
+================================================================================
+
+pasta: src/app/pages/risk/
+
+10.1 RiskCenterPage.tsx
+  - Centro de risco — visão consolidada.
+
+10.2 AlertasRiscoPage.tsx
+  - Alertas de risco gerados pelo sistema.
+
+10.3 ExposicaoPage.tsx
+  - Análise de exposição de crédito.
+
+10.4 RegrasRiscoPage.tsx
+  - Configuração de regras de risco.
+
+10.5 ScorePage.tsx
+  - Scoring de clientes/credits.
+
+
+================================================================================
+11. AUDITORIA
+================================================================================
+
+pasta: src/app/pages/audit/
+
+11.1 AuditPage.tsx
+  - Módulo principal de auditoria.
+
+11.2 AcessosPage.tsx
+  - Registo de acessos ao sistema (login/logout, IP, user-agent).
+
+11.3 EventosCriticosPage.tsx
+  - Registo de eventos críticos.
+
+11.4 HistoricoAlteracoesPage.tsx
+  - Histórico de alterações em dados sensíveis.
+
+11.5 LogsSistemaPage.tsx
+  - Logs técnicos do sistema.
+
+
+================================================================================
+12. COMPLIANCE
+================================================================================
+
+pasta: src/app/pages/compliance/
+ficheiro: CompliancePage.tsx
+
+Função:
+  - Conformidade regulamentar.
+  - Controlo de normas e regulamentos (ex: Banco de Moçambique).
+
+
+================================================================================
+13. NOTIFICAÇÕES
+================================================================================
+
+pasta: src/app/pages/notifications/
+
+13.1 NotificationsPage.tsx
+  - Centro de notificações do sistema.
+  - Alertas e notificações para o utilizador.
+
+13.2 AlertasNotificacoesPage.tsx
+  - Configuração de alertas e notificações.
+
+13.3 EmailPage.tsx
+  - Configuração de envio de emails.
+
+13.4 ModelosPage.tsx
+  - Gestão de templates/modelos de notificação.
+
+13.5 SmsPage.tsx
+  - Configuração de envio de SMS.
+
+
+================================================================================
+14. RELATÓRIOS
+================================================================================
+
+pasta: src/app/pages/reports/
+
+14.1 ReportsPage.tsx
+  - Hub de relatórios do sistema.
+
+14.2 AlertasPage.tsx
+  - Relatório de alertas gerados.
+
+14.3 BancoMocambiqueReportPage.tsx
+  - Relatórios de conformidade para o Banco de Moçambique.
+
+14.4 CarteirasReportPage.tsx
+  - Relatórios de carteiras de crédito.
+
+14.5 ClientesReportPage.tsx
+  - Relatórios de clientes.
+
+14.6 CreditosReportPage.tsx
+  - Relatórios de créditos/empréstimos.
+
+14.7 FinanceiroReportPage.tsx
+  - Relatórios financeiros.
+
+14.8 IndicadoresReportPage.tsx
+  - Relatórios de indicadores/KPIs.
+
+
+================================================================================
+15. CONTABILIDADE
+================================================================================
+
+pasta: src/app/pages/accounting/
+ficheiro: AccountingPage.tsx
+
+Função:
+  - Módulo de contabilidade.
+  - Plano de contas, diário, balancete.
+  - Integração com operações financeiras.
+
+
+================================================================================
+16. CONCILIAÇÃO
+================================================================================
+
+pasta: src/app/pages/finance/
+ficheiro: ConciliacaoPage.tsx
+
+Função:
+  - Reconciliação de transações.
+  - Matching com extratos bancários.
+  - Controlo de conformidade financeira.
+
+
+================================================================================
+17. ADMIN (Painel Central de Empresas)
+================================================================================
+
+pasta: src/app/pages/admin/
+
+Função geral:
+  - Painel administrativo para super-administradores.
+  - Gestão multi-empresa (Central de Empresas).
+  - Acesso a funcionalidades globais que afectam todas as empresas do sistema.
+
+17.1 AdminDashboardPage.tsx
+  - Dashboard administrativo consolidado.
+  - Indicadores globais de todas as empresas.
+
+17.2 AdminUsersPage.tsx
+  - Gestão de utilizadores em todas as empresas.
+  - Criar, editar, desactivar utilizadores.
+  - Associar utilizadores a empresas.
+
+17.3 AdminCompaniesPage.tsx  [CENTRAL DE EMPRESAS]
+  - CRUD completo de empresas.
+  - Visualização de todas as empresas registadas no sistema.
+  - Criar nova empresa com todos os dados (nome, NUIT, endereço, contacto, etc).
+  - Editar dados de qualquer empresa.
+  - Activar/desactivar empresas.
+  - Fonte de verdade dos dados de empresa — todos os dados aqui registados
+    são reflectidos automaticamente na respectiva página de Configurações > Empresa.
+
+17.4 AdminSettingsPage.tsx
+  - Configurações globais do sistema (nível admin).
+
+17.5 AdminMonitoringPage.tsx
+  - Monitorização do sistema (health, performance).
+
+17.6 AdminNotificationsPage.tsx
+  - Gestão de notificações em todas as empresas.
+
+17.7 AdminAuditPage.tsx
+  - Auditoria consolidada de todas as empresas.
+
+17.8 AdminSecurityPage.tsx
+  - Configurações de segurança global.
+
+17.9 AdminSupportPage.tsx
+  - Gestão de suporte ao utilizador.
+
+17.10 AdminFinanceiroPage.tsx
+  - Visão financeira consolidada.
+
+17.11 AdminAdminReportsPage.tsx
+  - Relatórios administrativos consolidados.
+
+17.12 AdminMicrocreditoPage.tsx
+  - Configurações específicas de microcrédito (nível admin).
+
+--- DETALHE: CENTRAL DE EMPRESAS (AdminCompaniesPage.tsx) ---
+
+Funcionalidades:
+  - Lista todas as empresas do sistema com nome, NUIT, telefone, email e estado.
+  - Criar empresa: formulário completo com todos os campos obrigatórios.
+  - Editar empresa: permite alterar qualquer dado da empresa.
+  - Activar/desactivar empresa: controla se a empresa está operacional.
+  - Eliminar empresa: remove a empresa do sistema.
+
+  - Fonte de verdade (Single Source of Truth):
+    Os dados registados na Central de Empresas são a referência principal.
+    Qualquer alteração feita aqui reflete automaticamente em:
+      → Configurações > Empresa (EmpresaPage.tsx)
+      → Cabeçalhos de PDFs e relatórios
+      → Dados de faturação e documentos
+
+  - Permissões:
+    Apenas administradores com permissão "admin.gestao_empresas"
+    podem aceder e modificar dados na Central de Empresas.
+
+Fluxo de dados:
+  [Central de Empresas] AdminCompaniesPage.tsx
+       ↓ CRUD directo na BD (tabela companies)
+       ↓
+  [API] GET /api/admin/companies  e  PUT /api/admin/companies/:id
+       ↓
+  [Configurações > Empresa] EmpresaPage.tsx
+       ↓ Sincronização automática via GET /api/company/profile
+       ↓
+  [PDFs / Relatórios] Usam dados da empresa no cabeçalho
+
+
+================================================================================
+18. SHARED (Partilhado)
+================================================================================
+
+pasta: src/app/pages/shared/
+ficheiro: RouteRedirectPage.tsx
+
+Função:
+  - Página de redirecionamento genérico.
+
+pasta: shared/
+ficheiro: permissions.mjs
+
+Função:
+  - Definições de permissões usadas em todo o sistema.
+  - Mapeamento de permissões (ex: solicitar.credito, analisar.credito, alterar.configuracoes.sistema, etc).
+
+
+================================================================================
+ESTRUTURA DE PASTAS PRINCIPAIS DO BACKEND
+================================================================================
+
+backend/src/
+  config/            - Configurações (DB, env)
+  db/
+    migrations/      - Migrações SQL da base de dados
+      ├── 001_initial_schema.sql
+      ├── 002_notifications_and_sms.sql
+      ├── 003_company_payments.sql
+      └── 004_admin_modules.sql
+  middleware/        - Middlewares (auth, permissions, subscription-check)
+  routes/            - Rotas da API
+    ├── auth-routes.js
+    ├── company-context-routes.js
+    ├── company-payment-routes.js
+    ├── admin-*.js
+    └── ...
+  services/          - Serviços de negócio
+    ├── company-payment-service.js
+    └── notification-service.js
+
+
+================================================================================
+FLUXO PRINCIPAL DO SISTEMA
+================================================================================
+
+1. LOGIN
+    → LoginPage.tsx (autenticação)
+
+2. DASHBOARD
+    → DashboardPage.tsx (visão geral do utilizador)
+
+3. PEDIDO DE CRÉDITO
+    → PedidosPage.tsx (criar pedido)
+    → AnalisePage.tsx (analisar)
+    → AprovacaoPage.tsx (aprovar)
+    → AutorizacaoPage.tsx (autorizar)
+    → DesembolsoPage.tsx (desembolsar)
+
+4. GESTÃO DE CLIENTES
+    → ClientsPage.tsx (CRUD)
+
+5. CONFIGURAÇÕES
+    → EmpresaPage.tsx + SistemaPage.tsx
+
+6. PARAMETRIZAÇÃO
+    → Taxas, Limites, Penalizações, Produtos, Calendário
+
+7. ADMIN (Central de Empresas)
+    → AdminCompaniesPage.tsx (gerir empresas)
+    → AdminUsersPage.tsx, AdminSettingsPage.tsx, etc.
+
+
+================================================================================
+FIM DA DOCUMENTAÇÃO
+================================================================================
