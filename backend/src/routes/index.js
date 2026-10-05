@@ -23,6 +23,7 @@ import { carteiraRouter } from "./carteira-routes.js";
 import { riskRouter } from "./risk-routes.js";
 import { eventosRouter } from "./eventos-routes.js";
 import { paymentMethodRouter } from "./payment-method-routes.js";
+import { creditProductRouter } from "./credit-product-routes.js";
 
 export function registerApiRoutes(app) {
   app.use("/api/auth", authRouter);
@@ -50,4 +51,5 @@ export function registerApiRoutes(app) {
   app.use("/api/risk", riskRouter);
   app.use("/api/eventos", eventosRouter);
   app.use("/api/seed", seedRouter);
+  app.use("/api/credit-products", creditProductRouter);
 }
