@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS financial_calendar_days (
   id BIGSERIAL PRIMARY KEY,
-  company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  company_id INT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   calendar_date DATE NOT NULL,
   description VARCHAR(180) NOT NULL,
   day_type VARCHAR(20) NOT NULL DEFAULT 'feriado',
