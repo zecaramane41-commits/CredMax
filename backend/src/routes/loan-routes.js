@@ -1884,14 +1884,22 @@ function normalizePaymentDays(value) {
   return normalized;
 }
 
-function generateDueDates(data, { disbursedDate, nextPaymentDate, maturityDate }) {
+function generateDueDates(data, { disbursedDate, nextPaymentDate, maturityDate, nonWorkingDates = [] }) {
+  const blockedDates = new Set((Array.isArray(nonWorkingDates) ? nonWorkingDates : []).map((value) => String(value).slice(0, 10)));
+  const isCalendarWorkingDay = (date) => !blockedDates.has(formatIsoDate(date));
+  const moveToNextWorkingDay = (date) => {
+    let current = new Date(date.getTime());
+    while (!isCalendarWorkingDay(current)) current = addDays(current, 1);
+    return current;
+  };
   if (data.paymentFrequency !== "diario") {
     const frequency = FREQUENCY_CONFIG[data.paymentFrequency];
     const rows = [];
     if (data.paymentFrequency === "mensal") {
       let current = new Date(nextPaymentDate.getTime());
       while (current <= maturityDate) {
-        rows.push(new Date(current.getTime()));
+        const adjusted = moveToNextWorkingDay(current);
+        if (adjusted <= maturityDate) rows.push(adjusted);
         current = addMonthsPreserveDay(current, 1);
       }
       return rows;
@@ -1900,7 +1908,8 @@ function generateDueDates(data, { disbursedDate, nextPaymentDate, maturityDate }
     if (!frequency?.intervalDays) return rows;
     let current = new Date(nextPaymentDate.getTime());
     while (current <= maturityDate) {
-      rows.push(new Date(current.getTime()));
+      const adjusted = moveToNextWorkingDay(current);
+      if (adjusted <= maturityDate) rows.push(adjusted);
       current = addDays(current, frequency.intervalDays);
     }
     return rows;
@@ -1914,8 +1923,8 @@ function generateDueDates(data, { disbursedDate, nextPaymentDate, maturityDate }
   while (current <= maturityDate) {
     const weekDay = current.getUTCDay();
     if (
-      (selectedDays.length > 0 && allowedWeekdays.includes(weekDay)) ||
-      (selectedDays.length === 0 && isBusinessDay(current))
+      (selectedDays.length > 0 && allowedWeekdays.includes(weekDay) && isCalendarWorkingDay(current)) ||
+      (selectedDays.length === 0 && isBusinessDay(current) && isCalendarWorkingDay(current))
     ) {
       rows.push(new Date(current.getTime()));
     }
@@ -2016,7 +2025,12 @@ function buildInstallments(data) {
   }
   const contractMonths = countContractMonths(disbursedDate, maturityDate);
 
-  const dueDates = generateDueDates(data, { disbursedDate, nextPaymentDate, maturityDate });
+  const dueDates = generateDueDates(data, {
+    disbursedDate,
+    nextPaymentDate,
+    maturityDate,
+    nonWorkingDates: data.nonWorkingDates,
+  });
   let installmentsCount = dueDates.length;
   if (data.paymentFrequency === "mensal") {
     installmentsCount = Math.max(1, monthsBetweenInclusive(nextPaymentDate, maturityDate));
@@ -3686,12 +3700,27 @@ async function createLoanDocuments(dbClient, { companyId, loanId, contractNo, ac
   }
 }
 
+
+
+async function getFinancialCalendarNonWorkingDates(companyId, dbClient = null) {
+  const runner = dbClient?.query ? dbClient : { query };
+  const result = await runner.query(
+    `SELECT calendar_date
+     FROM financial_calendar_days
+     WHERE company_id = $1 AND is_working_day = FALSE
+     ORDER BY calendar_date ASC`,
+    [companyId],
+  );
+  return result.rows.map((row) => String(row.calendar_date).slice(0, 10));
+}
+
 async function createLoanFromPayload(dbClient, { scope, payload, actor, disbursementStatus = "disbursed" }) {
   const contractNo =
     payload.contractNo && !String(payload.contractNo).startsWith("REQ-")
       ? payload.contractNo
       : await generateContractNo(scope.companyId);
-  const installments = buildInstallments(payload);
+  const nonWorkingDates = await getFinancialCalendarNonWorkingDates(scope.companyId, dbClient);
+  const installments = buildInstallments({ ...payload, nonWorkingDates });
   if (!installments.valid) {
     return { error: { status: 400, message: installments.message } };
   }
