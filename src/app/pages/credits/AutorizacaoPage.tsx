@@ -38,7 +38,7 @@ export default function AutorizacaoPage() {
     if (!selectedId || submitting) return;
     setSubmitting(true);
     try {
-      await decidirPedido(selectedId, "approve", observacao, true);
+      await decidirPedido(selectedId, "approve", observacao, false);
       toast.success("Crédito autorizado e liberado para desembolso com sucesso.");
       setSelectedId(null);
       setObservacao("");

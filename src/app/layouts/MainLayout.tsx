@@ -13,6 +13,7 @@ import { apiFetch } from "../lib/api";
 import { closeFinanceDay, fetchFinanceSessionState, openFinanceDay, type FinanceSessionState } from "../lib/finance-session";
 import { hasPermission } from "../lib/permissions";
 import NotificationBell from "../components/notifications/NotificationBell";
+import GlobalSearch from "../components/search/GlobalSearch";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -411,8 +412,9 @@ export default function MainLayout() {
               </div>
             </div>
 
-            {/* Right side */}
-            <div className="flex items-center gap-2">
+            {/* Global search + right side */}
+            <div className="flex min-w-0 items-center gap-2">
+              <GlobalSearch />
               <NotificationBell />
               <div className="relative">
                 <button

@@ -370,7 +370,7 @@ export default function DesembolsoPage() {
   const handleDisburse = async () => {
     if (!selected) return;
     try {
-      const res = await decidirPedido(selected.id, "approve", "Desembolso executado", true);
+      const res = await decidirPedido(selected.id, "approve", "Desembolso executado", false);
 
       // 1. Atualiza imediatamente o estado do pedido para sair da lista de pendentes no mesmo instante
       setPedidos((prev) =>

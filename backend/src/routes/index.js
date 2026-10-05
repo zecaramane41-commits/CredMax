@@ -25,6 +25,7 @@ import { eventosRouter } from "./eventos-routes.js";
 import { paymentMethodRouter } from "./payment-method-routes.js";
 import { creditProductRouter } from "./credit-product-routes.js";
 import { financialCalendarRouter } from "./financial-calendar-routes.js";
+import { globalSearchRouter } from "./global-search-routes.js";
 
 export function registerApiRoutes(app) {
   app.use("/api/auth", authRouter);
@@ -54,4 +55,5 @@ export function registerApiRoutes(app) {
   app.use("/api/seed", seedRouter);
   app.use("/api/credit-products", creditProductRouter);
   app.use("/api/financial-calendar", financialCalendarRouter);
+  app.use("/api/search", globalSearchRouter);
 }

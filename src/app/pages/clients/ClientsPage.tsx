@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { Search, Plus, Filter, Download, Users, Building2, UserCheck, Edit, Trash2, ClipboardCheck, ShieldCheck, Shield, FileUp, FileCheck, AlertTriangle, CreditCard, ChevronRight, ChevronDown, Eye, Printer, DollarSign, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -671,6 +672,7 @@ export default function ClientsPage() {
 
   const [showClientForm, setShowClientForm] = useState(false);
   const [creditDetailClient, setCreditDetailClient] = useState<{ id: number; name: string } | null>(null);
+  const navigate = useNavigate();
   const [clientForm, setClientForm] = useState(emptyClientForm);
   const [editingClientId, setEditingClientId] = useState<number | null>(null);
   const [savingClient, setSavingClient] = useState(false);

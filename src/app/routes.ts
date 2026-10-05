@@ -10,9 +10,11 @@ import RouteRedirectPage from "./pages/shared/RouteRedirectPage";
 const FinancePage = lazyPage(() => import("./pages/finance/FinancePage"));
 const DashboardPage = lazyPage(() => import("./pages/dashboard/DashboardPage"));
 const ClientsPage = lazyPage(() => import("./pages/clients/ClientsPage"));
+const Client360Page = lazyPage(() => import("./pages/clients/Client360Page"));
 
 // Créditos
 const CreditsPage = lazyPage(() => import("./pages/credits/CreditsPage"));
+const Credit360Page = lazyPage(() => import("./pages/credits/Credit360Page"));
 const SimulatorPage = lazyPage(() => import("./pages/credits/SimulatorPage"));
 
 // Operações
@@ -120,9 +122,11 @@ export const router = createBrowserRouter([
       { index: true, Component: FinancePage },
       { path: "dashboard", Component: DashboardPage },
       { path: "clients", Component: ClientsPage },
+      { path: "clients/:clientId/360", Component: Client360Page },
 
       // Créditos
       { path: "credits", Component: CreditsPage },
+      { path: "credits/:creditId/360", Component: Credit360Page },
       { path: "credits/simulador", Component: SimulatorPage },
       // Rotas antigas -> redirecionam para a aba correspondente em /credits
       { path: "credits/pedidos", Component: RouteRedirectPage },
