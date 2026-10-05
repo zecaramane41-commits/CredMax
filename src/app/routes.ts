@@ -120,6 +120,7 @@ export const router = createBrowserRouter([
       { index: true, Component: FinancePage },
       { path: "dashboard", Component: DashboardPage },
       { path: "clients", Component: ClientsPage },
+      { path: "clients/:clientId/360", Component: Client360Page },
 
       // Créditos
       { path: "credits", Component: CreditsPage },
