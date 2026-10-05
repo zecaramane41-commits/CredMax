@@ -2286,9 +2286,16 @@ function validateLoanPayload(body, options = {}) {
     const disbursedDate = new Date(`${disbursed}T00:00:00Z`);
     const maturityDate = new Date(`${maturity}T00:00:00Z`);
     if (!Number.isNaN(disbursedDate.getTime()) && !Number.isNaN(maturityDate.getTime()) && maturityDate > disbursedDate) {
-      const termDays = Math.ceil((maturityDate.getTime() - disbursedDate.getTime()) / 86400000);
-      const termMonths = Math.ceil(termDays / 30.4375);
-      if (termMonths > maxLoanTermMonths) {
+      const maxAllowedDate = new Date(disbursedDate);
+      const originalDay = maxAllowedDate.getUTCDate();
+      maxAllowedDate.setUTCDate(1);
+      maxAllowedDate.setUTCMonth(maxAllowedDate.getUTCMonth() + maxLoanTermMonths);
+      const lastDayOfTargetMonth = new Date(
+        Date.UTC(maxAllowedDate.getUTCFullYear(), maxAllowedDate.getUTCMonth() + 1, 0),
+      ).getUTCDate();
+      maxAllowedDate.setUTCDate(Math.min(originalDay, lastDayOfTargetMonth));
+
+      if (maturityDate > maxAllowedDate) {
         return {
           valid: false,
           message: `Prazo do credito excede o limite operacional de ${maxLoanTermMonths} meses.`,
