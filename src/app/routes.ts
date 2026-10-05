@@ -9,7 +9,8 @@ import RouteRedirectPage from "./pages/shared/RouteRedirectPage";
 // Dashboard e Core
 const FinancePage = lazyPage(() => import("./pages/finance/FinancePage"));
 const DashboardPage = lazyPage(() => import("./pages/dashboard/DashboardPage"));
-const ClientsPage = lazyPage(() => import("./pages/clients/ClientsPage"));\nconst Client360Page = lazyPage(() => import("./pages/clients/Client360Page"));
+const ClientsPage = lazyPage(() => import("./pages/clients/ClientsPage"));
+const Client360Page = lazyPage(() => import("./pages/clients/Client360Page"));
 
 // Créditos
 const CreditsPage = lazyPage(() => import("./pages/credits/CreditsPage"));
