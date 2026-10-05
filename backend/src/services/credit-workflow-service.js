@@ -33,6 +33,7 @@ export function getCreditWorkflowNextStatus(currentStatus, decision, { isAdmin =
   if (current === "pending_analyst") return isAdmin && directApproval ? "approved" : "pending_manager";
   if (current === "pending_manager") return isAdmin && directApproval ? "approved" : "pending_final";
   if (current === "pending_final") return "approved";
+  if (current === "approved") return "disbursed";
 
   throw new Error("A solicitacao nao pode avancar para aprovacao a partir do estado atual.");
 }
