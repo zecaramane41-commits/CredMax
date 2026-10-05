@@ -20,7 +20,8 @@ export const PROCESS_STATE_MACHINES = {
     DELINQUENT: ["ACTIVE", "PAID", "RESTRUCTURED"],
     RESTRUCTURED: ["ACTIVE", "PAID", "DELINQUENT"],
     PAID: [],
-    REJECTED: [],
+    // Reabertura (decision=reopen) volta o pedido à submissão para novo ciclo de análise.
+    REJECTED: ["SUBMITTED"],
   },
   disbursement: {
     PENDING: ["VALIDATED"],
@@ -127,6 +128,103 @@ export async function recordTransition(
     ],
   );
   return { id: result.rows[0].id, createdAt: result.rows[0].created_at, fromState, toState };
+}
+
+function findTransitionPath(machine, fromState, toState) {
+  if (fromState === toState) return [fromState];
+  const queue = [[fromState]];
+  const seen = new Set([fromState]);
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const last = path[path.length - 1];
+    for (const next of machine[last] || []) {
+      if (seen.has(next)) continue;
+      seen.add(next);
+      const candidate = [...path, next];
+      if (next === toState) return candidate;
+      queue.push(candidate);
+    }
+  }
+  return null;
+}
+
+/**
+ * Avança uma entidade para o estado alvo, registando cada passo na trilha.
+ * - Se a entidade ainda não tem trilha (registos antigos), semeia o estado inicial
+ *   e avança até ao alvo com marcação "Avanço automático".
+ * - Cada transição individual continua a ser validada pela máquina de estados
+ *   (nunca escreve transições inválidas).
+ * - No-ops se a entidade já está no estado alvo.
+ */
+export async function advanceToState(
+  { companyId, entityType, entityId, clientId = null, toState, reason = null, note = null, documentIds = [], actor = {} },
+  db = { query },
+) {
+  const machine = PROCESS_STATE_MACHINES[entityType];
+  if (!machine) {
+    throw new Error(`Tipo de entidade de processo desconhecido: ${entityType}`);
+  }
+  if (!Object.prototype.hasOwnProperty.call(machine, toState)) {
+    throw new Error(`Estado desconhecido para ${entityType}: ${toState}`);
+  }
+
+  const steps = [];
+  let fromState = await getCurrentState({ companyId, entityType, entityId }, db);
+  if (fromState === toState) {
+    return { changed: false, steps };
+  }
+
+  if (fromState == null) {
+    const initial = Object.keys(machine)[0];
+    if (toState === initial) {
+      const step = await recordTransition(
+        { companyId, entityType, entityId, clientId, toState, reason, note, documentIds, actor },
+        db,
+      );
+      return { changed: true, steps: [step] };
+    }
+    steps.push(
+      await recordTransition(
+        {
+          companyId,
+          entityType,
+          entityId,
+          clientId,
+          toState: initial,
+          reason: "Trilha iniciada",
+          note: "Estado inicial registado retroativamente pelo sistema.",
+          actor,
+        },
+        db,
+      ),
+    );
+    fromState = initial;
+  }
+
+  const path = findTransitionPath(machine, fromState, toState);
+  if (!path) {
+    throw new Error(`Sem caminho em ${entityType}: ${fromState} -> ${toState}`);
+  }
+  for (const state of path.slice(1)) {
+    const isTarget = state === toState;
+    steps.push(
+      await recordTransition(
+        {
+          companyId,
+          entityType,
+          entityId,
+          clientId,
+          toState: state,
+          reason: isTarget ? reason : "Avanço automático",
+          note: isTarget ? note : "Etapa intermediária registada automaticamente pelo sistema.",
+          documentIds: isTarget ? documentIds : [],
+          actor,
+        },
+        db,
+      ),
+    );
+  }
+  return { changed: true, steps };
 }
 
 export async function listTimeline({ companyId, entityType = null, entityId = null, clientId = null, limit = 200 }, db = { query }) {

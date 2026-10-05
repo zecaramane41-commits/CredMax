@@ -5,6 +5,7 @@ import { requireLoanPermission, requireReadWrite } from "../middleware/permissio
 import { postDoubleEntry } from "../services/accounting-service.js";
 import { notifyCaixaMovement, notifyPaymentReceivedSms, notifyDisbursementEmail, notifyRepaymentEmail, createSystemNotification } from "../services/notification-service.js";
 import { publishAppEvent } from "../services/event-bus.js";
+import { advanceToState } from "../services/process-log-service.js";
 
 export const loanRouter = express.Router();
 
@@ -4435,8 +4436,9 @@ loanRouter.post("/approval/requests", async (req, res, next) => {
     const actorUserId = Number(req.user?.sub) || null;
     const actorName = req.user?.name || null;
 
-    const inserted = await query(
-      `
+    const inserted = await withTransaction(async (dbClient) => {
+      const result = await dbClient.query(
+        `
       INSERT INTO loan_approval_requests (
         company_id, client_id, requested_amount, payload, status, risk_level, risk_reasons,
         created_by_user_id, created_by_name
@@ -4444,17 +4446,33 @@ loanRouter.post("/approval/requests", async (req, res, next) => {
       VALUES ($1, $2, $3, $4::jsonb, 'pending_analyst', $5, $6::jsonb, $7, $8)
       RETURNING id, status, requested_amount, created_at
       `,
-      [
-        scope.companyId,
-        clientId,
-        requestedAmount,
-        JSON.stringify(payload),
-        risk.riskLevel,
-        JSON.stringify(risk.reasons),
-        actorUserId,
-        actorName,
-      ],
-    );
+        [
+          scope.companyId,
+          clientId,
+          requestedAmount,
+          JSON.stringify(payload),
+          risk.riskLevel,
+          JSON.stringify(risk.reasons),
+          actorUserId,
+          actorName,
+        ],
+      );
+      // Fase 2.1 — trilha de processo: pedido criado e submetido.
+      await advanceToState(
+        {
+          companyId: scope.companyId,
+          entityType: "application",
+          entityId: Number(result.rows[0].id),
+          clientId,
+          toState: "SUBMITTED",
+          reason: "Pedido de credito submetido",
+          note: `Valor solicitado: ${requestedAmount} MT`,
+          actor: { userId: actorUserId, name: actorName },
+        },
+        dbClient,
+      );
+      return result;
+    });
 
     const row = inserted.rows[0];
 
@@ -4535,6 +4553,20 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
             `,
             [id, scope.companyId],
           );
+          // Fase 2.1 — trilha de processo: aprovação com geração de crédito já liquidado.
+          await advanceToState(
+            {
+              companyId: scope.companyId,
+              entityType: "application",
+              entityId: id,
+              clientId: request.client_id,
+              toState: "ACTIVE",
+              reason: "Credito desembolsado",
+              note: loanRow.rows[0]?.contract_no ? `Contrato ${loanRow.rows[0].contract_no}` : null,
+              actor: { userId: actor.userId, name: actor.name },
+            },
+            dbClient,
+          );
           return {
             approved: true,
             status: "disbursed",
@@ -4564,6 +4596,20 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
           WHERE id = $1 AND company_id = $2
           `,
           [id, scope.companyId, targetStatus],
+        );
+        // Fase 2.1 — trilha de processo: reabertura do pedido.
+        await advanceToState(
+          {
+            companyId: scope.companyId,
+            entityType: "application",
+            entityId: id,
+            clientId: request.client_id,
+            toState: targetStatus === "pending_analyst" ? "SUBMITTED" : "APPROVAL",
+            reason: "Pedido reaberto",
+            note: note || null,
+            actor: { userId: actor.userId, name: actor.name },
+          },
+          dbClient,
         );
         return { reopened: true, status: targetStatus };
       }
@@ -4672,6 +4718,20 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
           `,
           [id, scope.companyId, actor.userId, actor.name, note, request.status],
         );
+        // Fase 2.1 — trilha de processo: rejeição/bloqueio.
+        await advanceToState(
+          {
+            companyId: scope.companyId,
+            entityType: "application",
+            entityId: id,
+            clientId: request.client_id,
+            toState: "REJECTED",
+            reason: decision === "reject" ? "Pedido rejeitado" : "Bloqueio de risco",
+            note,
+            actor: { userId: actor.userId, name: actor.name },
+          },
+          dbClient,
+        );
         return { rejected: true };
       }
 
@@ -4688,6 +4748,20 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
           WHERE id = $1 AND company_id = $2
           `,
           [id, scope.companyId, actor.userId, actor.name, note, nextStatus],
+        );
+        // Fase 2.1 — trilha de processo: avanço para etapa de aprovação.
+        await advanceToState(
+          {
+            companyId: scope.companyId,
+            entityType: "application",
+            entityId: id,
+            clientId: request.client_id,
+            toState: "APPROVAL",
+            reason: `Aprovado na etapa anterior; agora em ${nextStatus === "pending_final" ? "aprovacao final" : "aprovacao de gestor"}`,
+            note: note || null,
+            actor: { userId: actor.userId, name: actor.name },
+          },
+          dbClient,
         );
         return { approved: true, status: nextStatus };
       }
@@ -4767,6 +4841,20 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
         WHERE id = $1 AND company_id = $2
         `,
         [id, scope.companyId, actor.userId, actor.name, note, createResult.loanId],
+      );
+      // Fase 2.1 — trilha de processo: aprovação final.
+      await advanceToState(
+        {
+          companyId: scope.companyId,
+          entityType: "application",
+          entityId: id,
+          clientId: request.client_id,
+          toState: "APPROVED",
+          reason: "Aprovacao final concluida",
+          note: note || null,
+          actor: { userId: actor.userId, name: actor.name },
+        },
+        dbClient,
       );
       return { approved: true, status: "approved", loanId: createResult.loanId, contractNo: createResult.contractNo };
     });
@@ -5273,6 +5361,47 @@ loanRouter.post("/:id/disburse", async (req, res, next) => {
           ...(administrativeFeeAmount > 0 ? [{ accountCode: "4120", debit: 0, credit: administrativeFeeAmount, memo: "Preparo/custos administrativos retidos no desembolso" }] : []),
         ],
       });
+
+      // Fase 2.1 — trilha de processo: desembolso concluído (crédito ativo + liquidação bancária).
+      const approvalRequestRow = await dbClient.query(
+        `
+        SELECT id, client_id
+        FROM loan_approval_requests
+        WHERE company_id = $1 AND generated_loan_id = $2
+        ORDER BY id DESC
+        LIMIT 1
+        `,
+        [scope.companyId, loanId],
+      );
+      const approvalRequest = approvalRequestRow.rows[0];
+      if (approvalRequest) {
+        await advanceToState(
+          {
+            companyId: scope.companyId,
+            entityType: "application",
+            entityId: Number(approvalRequest.id),
+            clientId: approvalRequest.client_id,
+            toState: "ACTIVE",
+            reason: "Credito desembolsado",
+            note: `Contrato ${loan.contract_no}`,
+            actor: { userId: actorUserId, name: actorName },
+          },
+          dbClient,
+        );
+      }
+      await advanceToState(
+        {
+          companyId: scope.companyId,
+          entityType: "disbursement",
+          entityId: loanId,
+          clientId: loan.client_id,
+          toState: "CONFIRMED",
+          reason: "Desembolso realizado",
+          note: `Contrato ${loan.contract_no} · Valor ${Number(loan.principal || 0)} MT`,
+          actor: { userId: actorUserId, name: actorName },
+        },
+        dbClient,
+      );
 
       return {
         loanId,

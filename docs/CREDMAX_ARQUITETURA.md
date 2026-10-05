@@ -88,6 +88,8 @@ Princípio: **os dados são o centro**, agrupados por terem um dono (o cliente) 
 DRAFT → SUBMITTED → TRIAGE → DOCUMENTATION → ANALYSIS → EVALUATION
      → APPROVAL → APPROVED → CONTRACT → DISBURSEMENT → ACTIVE
      → PAID | DELINQUENT | RESTRUCTURED
+REJECTED  ← qualquer etapa de submissão/triagem/análise/aprovação pode rejeitar
+REJECTED  → SUBMITTED  (reabertura de pedido rejeitado/bloqueado)
 ```
 
 ### 4.2 Estado do desembolso
@@ -115,6 +117,14 @@ Toda mudança de estado regista sempre:
 - `document_ids[]` (documentos relacionados)
 
 Isto cria uma verdadeira **linha do tempo** por cliente e por crédito.
+
+**Pontos de gravação automática (Fase 2.1):** criação do pedido (`SUBMITTED`), decisão
+(avanço de etapa → `APPROVAL`, rejeição/bloqueio → `REJECTED`, reabertura → `SUBMITTED`,
+aprovação final → `APPROVED`) e desembolso (`application → ACTIVE` +
+`disbursement → CONFIRMED`). As etapas intermédias puladas pelo fluxo real são registadas
+como `Avanço automático`; entidades antigas sem trilha recebem o estado inicial de forma
+retroativa (`Trilha iniciada`). Cada passo individual continua validado pela máquina de
+estados — a trilha nunca escreve transições inválidas.
 
 ---
 

@@ -79,8 +79,8 @@ export default function ProcessTimeline({ clientId }: { clientId: number }) {
                 {label(item.fromState)} → {label(item.toState)}
               </p>
               <p className="text-xs text-slate-500">
-                {new Date(item.createdAt).toLocaleString("pt-PT")}
-                {item.changedByName ? ` · ${item.changedByName}` : ""}
+                {item.createdAt ? new Date(item.createdAt).toLocaleString("pt-PT") : ""}
+                {item.actorName ? ` · ${item.actorName}` : ""}
                 {item.reason ? ` · ${item.reason}` : ""}
               </p>
               {item.note && <p className="text-xs text-slate-600 mt-0.5">{item.note}</p>}

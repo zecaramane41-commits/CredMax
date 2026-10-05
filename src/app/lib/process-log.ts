@@ -9,8 +9,8 @@ export type ProcessTimelineItem = {
   toState: string;
   reason: string | null;
   note: string | null;
-  changedByUserId: number | null;
-  changedByName: string | null;
+  actorUserId: number | null;
+  actorName: string | null;
   createdAt: string;
 };
 
