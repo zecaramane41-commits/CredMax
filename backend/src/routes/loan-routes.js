@@ -5153,6 +5153,7 @@ loanRouter.post("/simulate", async (req, res, next) => {
       return res.status(400).json({ message: "Datas obrigatorias em falta." });
     }
 
+    const nonWorkingDates = await getFinancialCalendarNonWorkingDates(scope.companyId);
     const scheduleResult = buildInstallments({
       amount,
       rate,
@@ -5162,6 +5163,7 @@ loanRouter.post("/simulate", async (req, res, next) => {
       disbursed,
       maturity,
       nextPayment,
+      nonWorkingDates,
     });
     if (!scheduleResult.valid) {
       return res.status(400).json({ message: scheduleResult.message });
@@ -6853,7 +6855,8 @@ loanRouter.patch("/:id/financial-events/:eventId/review", async (req, res, next)
         nextPayment: proposedNextPayment,
         maturity: proposedMaturity,
       };
-      const schedule = buildInstallments(restructureData);
+      const nonWorkingDates = await getFinancialCalendarNonWorkingDates(scope.companyId, dbClient);
+      const schedule = buildInstallments({ ...restructureData, nonWorkingDates });
       if (!schedule.valid) {
         return { error: { status: 400, message: schedule.message } };
       }
@@ -9292,7 +9295,8 @@ loanRouter.put("/:id", async (req, res, next) => {
 
     let installments = null;
     if (scheduleChanged) {
-      installments = buildInstallments(d);
+      const nonWorkingDates = await getFinancialCalendarNonWorkingDates(scope.companyId);
+      installments = buildInstallments({ ...d, nonWorkingDates });
       if (!installments.valid) {
         return res.status(400).json({ message: installments.message });
       }
