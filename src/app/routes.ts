@@ -14,6 +14,7 @@ const Client360Page = lazyPage(() => import("./pages/clients/Client360Page"));
 
 // Créditos
 const CreditsPage = lazyPage(() => import("./pages/credits/CreditsPage"));
+const Credit360Page = lazyPage(() => import("./pages/credits/Credit360Page"));
 const SimulatorPage = lazyPage(() => import("./pages/credits/SimulatorPage"));
 
 // Operações
@@ -125,6 +126,7 @@ export const router = createBrowserRouter([
 
       // Créditos
       { path: "credits", Component: CreditsPage },
+      { path: "credits/:creditId/360", Component: Credit360Page },
       { path: "credits/simulador", Component: SimulatorPage },
       // Rotas antigas -> redirecionam para a aba correspondente em /credits
       { path: "credits/pedidos", Component: RouteRedirectPage },
