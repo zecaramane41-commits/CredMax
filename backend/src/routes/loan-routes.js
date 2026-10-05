@@ -2207,7 +2207,12 @@ async function updateInstallmentStatusWithAudit({
 }
 
 function validateLoanPayload(body, options = {}) {
-  const defaultDailyPenaltyRate = DEFAULT_APPROVAL_POLICY.defaultDailyPenaltyRate;
+  const defaultDailyPenaltyRate = Number.isFinite(Number(options?.defaultDailyPenaltyRate))
+    ? Number(options.defaultDailyPenaltyRate)
+    : DEFAULT_APPROVAL_POLICY.defaultDailyPenaltyRate;
+  const maxLoanTermMonths = Number.isInteger(Number(options?.maxLoanTermMonths)) && Number(options.maxLoanTermMonths) > 0
+    ? Number(options.maxLoanTermMonths)
+    : null;
   const forcePriceMethod = Boolean(options?.forcePriceMethod);
   const contractNo = String(body?.contractNo || "").trim();
   const clientId = Number(body?.clientId);
@@ -2276,6 +2281,20 @@ function validateLoanPayload(body, options = {}) {
   }
   if (!disbursed || !maturity || !nextPayment) {
     return { valid: false, message: "Datas obrigatorias em falta." };
+  }
+  if (maxLoanTermMonths) {
+    const disbursedDate = new Date(`${disbursed}T00:00:00Z`);
+    const maturityDate = new Date(`${maturity}T00:00:00Z`);
+    if (!Number.isNaN(disbursedDate.getTime()) && !Number.isNaN(maturityDate.getTime()) && maturityDate > disbursedDate) {
+      const termDays = Math.ceil((maturityDate.getTime() - disbursedDate.getTime()) / 86400000);
+      const termMonths = Math.ceil(termDays / 30.4375);
+      if (termMonths > maxLoanTermMonths) {
+        return {
+          valid: false,
+          message: `Prazo do credito excede o limite operacional de ${maxLoanTermMonths} meses.`,
+        };
+      }
+    }
   }
   if (!Number.isInteger(daysOverdue) || daysOverdue < 0) {
     return { valid: false, message: "Dias de atraso invalido." };
@@ -4679,7 +4698,10 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
         amortizationMethod: payloadRaw.amortizationMethod || "price",
         paymentFrequency: frequencia,
       };
-      const validation = validateLoanPayload(payload, { defaultDailyPenaltyRate: policy.defaultDailyPenaltyRate });
+      const validation = validateLoanPayload(payload, {
+        defaultDailyPenaltyRate: policy.defaultDailyPenaltyRate,
+        maxLoanTermMonths: policy.maxLoanTermMonths,
+      });
       if (!validation.valid) return { error: { status: 400, message: `Payload invalido na aprovacao final: ${validation.message}` } };
       const d = validation.data;
 
@@ -9117,7 +9139,10 @@ loanRouter.post("/", async (req, res, next) => {
       return res.status(403).json({ message: "Criacao direta bloqueada. Use a esteira formal de aprovacao." });
     }
     const policy = await getApprovalPolicy(scope.companyId);
-    const validation = validateLoanPayload(req.body, { defaultDailyPenaltyRate: policy.defaultDailyPenaltyRate });
+    const validation = validateLoanPayload(req.body, {
+      defaultDailyPenaltyRate: policy.defaultDailyPenaltyRate,
+      maxLoanTermMonths: policy.maxLoanTermMonths,
+    });
     if (!validation.valid) {
       return res.status(400).json({ message: validation.message });
     }
@@ -9176,6 +9201,7 @@ loanRouter.put("/:id", async (req, res, next) => {
     const policy = await getApprovalPolicy(scope.companyId);
     const validation = validateLoanPayload(req.body, {
       defaultDailyPenaltyRate: policy.defaultDailyPenaltyRate,
+      maxLoanTermMonths: policy.maxLoanTermMonths,
       forcePriceMethod: role !== "admin",
     });
     if (!validation.valid) {
