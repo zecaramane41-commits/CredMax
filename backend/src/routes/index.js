@@ -24,6 +24,7 @@ import { riskRouter } from "./risk-routes.js";
 import { eventosRouter } from "./eventos-routes.js";
 import { paymentMethodRouter } from "./payment-method-routes.js";
 import { creditProductRouter } from "./credit-product-routes.js";
+import { financialCalendarRouter } from "./financial-calendar-routes.js";
 
 export function registerApiRoutes(app) {
   app.use("/api/auth", authRouter);
@@ -52,4 +53,5 @@ export function registerApiRoutes(app) {
   app.use("/api/eventos", eventosRouter);
   app.use("/api/seed", seedRouter);
   app.use("/api/credit-products", creditProductRouter);
+  app.use("/api/financial-calendar", financialCalendarRouter);
 }
