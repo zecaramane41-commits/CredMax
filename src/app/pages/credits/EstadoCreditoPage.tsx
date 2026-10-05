@@ -11,6 +11,7 @@ import autoTable from "jspdf-autotable";
 import { usePedidosPolling } from "../../lib/loans";
 import { fetchClients, type ClientSummary } from "../../lib/clients";
 import { printDocumentoCredito, type DocumentPartyData } from "../../lib/creditDocuments";
+import ProcessTimeline from "../../components/process/ProcessTimeline";
 
 type CreditState = "ativo" | "liquidado" | "atrasado";
 
@@ -755,6 +756,8 @@ export default function EstadoCreditoPage() {
                   </button>
                 </div>
               </div>
+
+              <ProcessTimeline clientId={selected.clientId} />
             </div>
         </div>
       </div>
