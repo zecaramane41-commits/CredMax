@@ -21,7 +21,7 @@ function mapRows(rows) {
  */
 export async function getClient360(companyId, clientId) {
   const clientResult = await query(
-    `SELECT c.*, p.code AS carteira_code, p.name AS carteira_name, p.gestor_name AS carteira_gestor_name
+    `SELECT c.*, p.code AS carteira_code, p.name AS carteira_name
      FROM clients c
      LEFT JOIN portfolios p ON p.id = c.carteira_id AND p.company_id = c.company_id
      WHERE c.id = $1 AND c.company_id = $2 LIMIT 1`,
@@ -48,10 +48,9 @@ export async function getClient360(companyId, clientId) {
     query(`SELECT e.*, u.full_name AS analyst_name FROM client_evaluations e LEFT JOIN users u ON u.id = e.analyst_user_id WHERE e.client_id = $1 AND e.company_id = $2 ORDER BY e.created_at DESC, e.id DESC`, [clientId, companyId]),
     query(`SELECT * FROM guarantors WHERE client_id = $1 AND company_id = $2 ORDER BY created_at DESC, id DESC`, [clientId, companyId]),
     query(`SELECT * FROM collaterals WHERE client_id = $1 AND company_id = $2 ORDER BY created_at DESC, id DESC`, [clientId, companyId]),
-    query(`SELECT l.*, u.full_name AS manager_name, p.code AS carteira_code, p.name AS carteira_name
+    query(`SELECT l.*, u.full_name AS manager_name
             FROM loans l
             LEFT JOIN users u ON u.id = l.manager_user_id
-            LEFT JOIN portfolios p ON p.id = l.carteira_id AND p.company_id = l.company_id
             WHERE l.client_id = $1 AND l.company_id = $2 ORDER BY l.created_at DESC, l.id DESC`, [clientId, companyId]),
     query(`SELECT r.*, l.contract_no FROM loan_repayments r LEFT JOIN loans l ON l.id = r.loan_id AND l.company_id = r.company_id
             WHERE r.client_id = $1 AND r.company_id = $2 ORDER BY r.payment_date DESC, r.id DESC`, [clientId, companyId]),
@@ -102,8 +101,8 @@ export async function getClient360(companyId, clientId) {
       businessSector: c.business_sector, registrationDate: c.registration_date,
       notes: c.notes, groupName: c.group_name, groupDescription: c.group_description,
       groupLeaderName: c.group_leader_name, score: num(c.score), status: c.status,
-      carteira: c.carteira_id ? { id: c.carteira_id, code: c.carteira_code, name: c.carteira_name, gestorName: c.carteira_gestor_name } : null,
-      createdAt: c.created_at, updatedAt: c.updated_at,
+      carteira: c.carteira_id ? { id: c.carteira_id, code: c.carteira_code, name: c.carteira_name } : null,
+      createdAt: c.created_at, updatedAt: null,
     },
     summary: {
       activeLoans: activeLoans.length,
