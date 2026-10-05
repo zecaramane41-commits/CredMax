@@ -1,7 +1,7 @@
 import express from "express";
 import { query, withTransaction } from "../config/db.js";
 import { requireAuth, resolveCompanyScope } from "../middleware/auth.js";
-import { requireLoanPermission } from "../middleware/permissions.js";
+import { requireLoanPermission, requireReadWrite } from "../middleware/permissions.js";
 import { postDoubleEntry } from "../services/accounting-service.js";
 import { notifyCaixaMovement, notifyPaymentReceivedSms, notifyDisbursementEmail, notifyRepaymentEmail, createSystemNotification } from "../services/notification-service.js";
 import { publishAppEvent } from "../services/event-bus.js";
@@ -1244,15 +1244,17 @@ function calculateFixedMoraAmount(amount, options = {}) {
   const moraEnabled = options?.moraEnabled !== undefined ? Boolean(options.moraEnabled) : true;
   const normalizedAmount = Number(amount || 0);
   const moraDays = resolveFixedMoraDays(options?.daysOverdue);
+  const penaltyRate = resolvePenaltyRateDecimal(options?.dailyPenaltyRate);
   if (!moraEnabled) return 0;
   if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) return 0;
   if (moraDays <= 0) return 0;
-  return round2(normalizedAmount * FIXED_MORA_RATE * moraDays);
+  return round2(normalizedAmount * penaltyRate * moraDays);
 }
 
-function calculateMora(balance, _dailyPenaltyRate, daysOverdue, options = {}) {
+function calculateMora(balance, dailyPenaltyRate, daysOverdue, options = {}) {
   return calculateFixedMoraAmount(balance, {
     ...options,
+    dailyPenaltyRate,
     daysOverdue,
   });
 }
@@ -1267,13 +1269,15 @@ function deriveLoanStatus(daysOverdue) {
   return "overdue";
 }
 
-function calculateInstallmentsMora(overdueAmount, _dailyPenaltyRate, waivedTotal, options = {}) {
+function calculateInstallmentsMora(overdueAmount, dailyPenaltyRate, waivedTotal, options = {}) {
   const moraEnabled = options?.moraEnabled !== undefined ? Boolean(options.moraEnabled) : true;
   const weightedOverdueAmount = Number(options?.weightedOverdueAmount || 0);
+  const penaltyRate = resolvePenaltyRateDecimal(dailyPenaltyRate);
   const gross = moraEnabled && Number.isFinite(weightedOverdueAmount) && weightedOverdueAmount > 0
-    ? round2(weightedOverdueAmount * FIXED_MORA_RATE)
+    ? round2(weightedOverdueAmount * penaltyRate)
     : calculateFixedMoraAmount(overdueAmount, {
       ...options,
+      dailyPenaltyRate,
       daysOverdue: options?.daysOverdue,
     });
   return Math.max(0, round2(gross - (Number(waivedTotal) || 0)));
@@ -3853,13 +3857,10 @@ loanRouter.get("/approval/policy", async (req, res, next) => {
   }
 });
 
-loanRouter.put("/approval/policy", async (req, res, next) => {
+loanRouter.put("/approval/policy", requireReadWrite("alterar.parametros.negocio"), async (req, res, next) => {
   try {
     const scope = resolveCompanyScope(req);
     if (!scope.companyId) return res.status(400).json({ message: "Selecione uma empresa para atualizar politica de aprovacao." });
-    const role = String(req.user?.role || "").trim().toLowerCase();
-    if (role !== "admin") return res.status(403).json({ message: "Apenas admin pode alterar politica de aprovacao." });
-
     const analystLimit = Number(req.body?.analystLimit);
     const managerLimit = Number(req.body?.managerLimit);
     const finalLimit = Number(req.body?.finalLimit);
