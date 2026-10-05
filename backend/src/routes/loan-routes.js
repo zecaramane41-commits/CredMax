@@ -4521,6 +4521,21 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
       } catch (workflowError) {
         return { error: { status: 409, message: workflowError.message } };
       }
+      
+      const auditWorkflow = async (nextStatus, actionName = decision, metadata = {}) => {
+        await recordCreditWorkflowTransition(dbClient, {
+          companyId: scope.companyId,
+          requestId: id,
+          previousStatus: request.status,
+          nextStatus,
+          action: actionName,
+          reason: note,
+          actorUserId: actor.userId,
+          actorName: actor.name,
+          actorRole: req.user?.role,
+          metadata,
+        });
+      };
       if (request.generated_loan_id) {
         if (decision === "approve") {
           const loanRow = await dbClient.query(
@@ -4544,6 +4559,7 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
             `,
             [id, scope.companyId],
           );
+          await auditWorkflow("disbursed", "approve", { generatedLoanId: request.generated_loan_id });
           return {
             approved: true,
             status: "disbursed",
@@ -4574,6 +4590,7 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
           `,
           [id, scope.companyId, targetStatus],
         );
+        await auditWorkflow(targetStatus, "reopen", { restoredFrom: request.status });
         return { reopened: true, status: targetStatus };
       }
 
@@ -4634,6 +4651,8 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
           `,
           [id, scope.companyId, actor.stage, actor.userId, actor.name, note, isAdmin],
         );
+        await auditWorkflow("rejected", "reject", { riskBlocked: true });
+        await auditWorkflow("rejected", "reject");
         return { rejected: true };
       }
 
@@ -4698,6 +4717,7 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
           `,
           [id, scope.companyId, actor.userId, actor.name, note, nextStatus],
         );
+        await auditWorkflow(nextStatus, "approve");
         return { approved: true, status: nextStatus };
       }
 
@@ -4777,6 +4797,7 @@ loanRouter.patch("/approval/requests/:id/decision", async (req, res, next) => {
         `,
         [id, scope.companyId, actor.userId, actor.name, note, createResult.loanId],
       );
+      await auditWorkflow("approved", "approve", { generatedLoanId: createResult.loanId });
       return { approved: true, status: "approved", loanId: createResult.loanId, contractNo: createResult.contractNo };
     });
 
