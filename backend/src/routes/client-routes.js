@@ -1,4 +1,5 @@
 import express from "express";
+import { getClient360 } from "../services/client-360-service.js";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -475,6 +476,20 @@ function validateCollateralPayload(body) {
 
   return { valid: true, data };
 }
+
+clientRouter.get("/:id/360", async (req, res, next) => {
+  try {
+    const scope = resolveCompanyScope(req);
+    if (!scope.companyId) return res.status(400).json({ message: "Selecione uma empresa." });
+    const clientId = Number(req.params.id);
+    if (!Number.isInteger(clientId) || clientId <= 0) return res.status(400).json({ message: "Cliente invalido." });
+    const profile = await getClient360(scope.companyId, clientId);
+    if (!profile) return res.status(404).json({ message: "Cliente nao encontrado." });
+    return res.json(profile);
+  } catch (error) {
+    return next(error);
+  }
+});
 
 clientRouter.get("/options", async (req, res, next) => {
   try {
