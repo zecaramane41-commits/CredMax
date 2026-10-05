@@ -14,7 +14,7 @@ function mapResult(row) {
     href: row.type === "client"
       ? `/clients/${row.id}/360`
       : row.type === "loan"
-        ? `/loans/${row.id}`
+        ? `/credits/${row.id}/360`
         : row.type === "request"
           ? `/loans/approvals/${row.id}`
           : row.type === "payment"
