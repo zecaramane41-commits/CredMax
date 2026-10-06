@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Build output
+dist/
+backend/dist/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.local
+
+# Uploads & runtime data
+backend/uploads/
+backend/tmp/
+*.log
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# Docker
+.docker/
+
+# Artefactos temporários e dados one-off
+backend/migrate_out.txt
+backend/scripts/*.txt
+backend/scripts/*.b64
+backend/scripts/write_*.js
+backend/scripts/decode_*.js
+*.xlsx
+src/form/estado antonio sibone.pdf
