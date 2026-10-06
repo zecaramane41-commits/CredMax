@@ -10,8 +10,11 @@ import {
   Wallet,
 } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
   Cell,
+  Legend,
   Line,
   LineChart,
   Pie,
@@ -260,9 +263,23 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Distribuicao de Risco</h2>
             <div className="mt-3 h-[260px]">
-              <div className="h-full w-full rounded-md border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
-                <span>Gráfico: Distribuição de Risco (placeholder)</span>
-              </div>
+              {data?.portfolio?.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={data.portfolio} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
+                      {data.portfolio.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatMt(value)} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full w-full rounded-md border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
+                  <span>Gráfico: Distribuição de Risco (placeholder)</span>
+                </div>
+              )}
             </div>
         </div>
       </div>
@@ -271,18 +288,46 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Fluxo Financeiro Mensal (MT)</h2>
           <div className="mt-3 h-[300px]">
-            <div className="h-full w-full rounded-md border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
-              <span>Gráfico: Fluxo Financeiro Mensal (placeholder)</span>
-            </div>
+            {data?.monthly?.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.monthly} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="period" tickFormatter={formatPeriodLabel} />
+                  <YAxis tickFormatter={formatMt} />
+                  <Tooltip labelFormatter={formatPeriodLabel} formatter={(value: number) => formatMt(value)} />
+                  <Legend />
+                  <Line type="monotone" dataKey="disbursed" name="Desembolsos" stroke="#3b82f6" activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="reimbursed" name="Reembolsos" stroke="#10b981" />
+                  <Line type="monotone" dataKey="expenses" name="Despesas" stroke="#ef4444" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full rounded-md border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
+                <span>Gráfico: Fluxo Financeiro Mensal (placeholder)</span>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Evolucao do Saldo Projetado da Carteira</h2>
           <div className="mt-3 h-[300px]">
-            <div className="h-full w-full rounded-md border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
-              <span>Gráfico: Evolução do Saldo Projetado (placeholder)</span>
-            </div>
+            {data?.monthly?.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.monthly} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="period" tickFormatter={formatPeriodLabel} />
+                  <YAxis tickFormatter={formatMt} />
+                  <Tooltip labelFormatter={formatPeriodLabel} formatter={(value: number) => formatMt(value)} />
+                  <Legend />
+                  <Area type="monotone" dataKey="projectedPortfolioBalance" name="Saldo Projetado" stroke="#334155" fill="#334155" fillOpacity={0.3} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full rounded-md border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400">
+                <span>Gráfico: Evolução do Saldo Projetado (placeholder)</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

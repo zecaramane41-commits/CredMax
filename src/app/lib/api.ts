@@ -99,7 +99,11 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     payload = {};
   }
   if (!response.ok) {
-    const msg = payload?.message || "Erro na comunicacao com o servidor.";
+    const rawMessage = payload?.message;
+    const msg =
+      typeof rawMessage === "string" && rawMessage.trim()
+        ? rawMessage
+        : "Erro na comunicacao com o servidor.";
     throw new Error(msg);
   }
   return payload as T;
