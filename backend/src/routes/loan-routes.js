@@ -1120,7 +1120,7 @@ function normalizeLoanProductType(value) {
   return LOAN_PRODUCT_TYPES.NORMAL;
 }
 
-function normalizeRatePercent(value) {
+export function normalizeRatePercent(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return Number.NaN;
   // Accept both formats: 30 (30%) and 0.30 (30%).
@@ -2006,7 +2006,7 @@ function countContractMonths(disbursedDate, maturityDate) {
   return Math.max(1, months);
 }
 
-function buildInstallments(data) {
+export function buildInstallments(data) {
   const nextPaymentDate = parseIsoDate(data.nextPayment);
   const maturityDate = parseIsoDate(data.maturity);
   const disbursedDate = parseIsoDate(data.disbursed);
@@ -3634,7 +3634,7 @@ function normalizeApprovalPolicy(row) {
   };
 }
 
-async function getApprovalPolicy(companyId) {
+export async function getApprovalPolicy(companyId) {
   const policyResult = await query(
     `
     SELECT
@@ -3660,7 +3660,7 @@ async function getApprovalPolicy(companyId) {
   return normalizeApprovalPolicy(policyResult.rows[0] || null);
 }
 
-function resolveRiskEvaluation({ client, policy }) {
+export function resolveRiskEvaluation({ client, policy }) {
   const status = String(client?.status || "").trim().toLowerCase();
   const score = Number(client?.score || 0);
   const debt = Number(client?.debt || 0);

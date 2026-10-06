@@ -11,13 +11,16 @@ export default function App() {
     applySystemTheme();
   }, []);
 
-  const isLoginRoute = window.location.pathname === "/login";
+  const pathname = window.location.pathname;
+  const isLoginRoute = pathname === "/login";
+  // Portal público do cliente (Fase 2.2): acessível sem sessão interna.
+  const isPublicPortalRoute = pathname === "/credito" || pathname.startsWith("/credito/");
   const authenticated = isAuthenticated();
   const user = getUser();
   const activeCompanyId = getActiveCompanyId();
   const isCentralAdmin = Boolean(user?.role === "admin" && !user?.companyId);
 
-  if (!isLoginRoute && !authenticated) {
+  if (!isLoginRoute && !isPublicPortalRoute && !authenticated) {
     window.location.href = "/login";
   }
 
@@ -26,7 +29,7 @@ export default function App() {
   }
 
   // Central admin: allow all /admin* and /admin-companies paths; only redirect if on a non-admin page
-  if (!isLoginRoute && authenticated && isCentralAdmin && !activeCompanyId && !window.location.pathname.startsWith("/admin") && window.location.pathname !== "/admin-companies") {
+  if (!isLoginRoute && !isPublicPortalRoute && authenticated && isCentralAdmin && !activeCompanyId && !pathname.startsWith("/admin") && pathname !== "/admin-companies") {
     window.location.href = "/admin-companies";
   }
   

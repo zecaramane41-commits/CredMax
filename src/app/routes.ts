@@ -4,7 +4,13 @@ import { lazyPage } from "./lib/lazy";
 // Páginas core que ficam no bundle inicial (necessárias à primeira render)
 import LoginPage from "./pages/auth/LoginPage";
 import MainLayout from "./layouts/MainLayout";
+import PortalLayout from "./layouts/PortalLayout";
 import RouteRedirectPage from "./pages/shared/RouteRedirectPage";
+
+// Portal público do cliente (Fase 2.2) — rotas fora da sessão interna
+const PortalSimulatorPage = lazyPage(() => import("./pages/portal/PortalSimulatorPage"));
+const PortalAccessPage = lazyPage(() => import("./pages/portal/PortalAccessPage"));
+const PortalRequestsPage = lazyPage(() => import("./pages/portal/PortalRequestsPage"));
 
 // Dashboard e Core
 const FinancePage = lazyPage(() => import("./pages/finance/FinancePage"));
@@ -112,6 +118,16 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     Component: LoginPage,
+  },
+  {
+    // Portal público do cliente (Fase 2.2 — §5): simulador, acesso e pedidos.
+    path: "/credito",
+    Component: PortalLayout,
+    children: [
+      { index: true, Component: PortalSimulatorPage },
+      { path: "aceder", Component: PortalAccessPage },
+      { path: "pedidos", Component: PortalRequestsPage },
+    ],
   },
   {
     path: "/",

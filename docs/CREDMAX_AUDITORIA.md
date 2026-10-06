@@ -30,8 +30,8 @@
 
 | Funcionalidade | Estado | Observações |
 |----------------|--------|-------------|
-| Simulador | 🟡 | Existe `SimulatorPage` (rota `credits/simulator`) com a base de cálculo (prestação/juros/taxas). É **interno**; falta torná-lo **público** e ligá-lo à criação direta de um pedido. |
-| Portal público do cliente | 🔴 | **Ausente.** Sem registo público, acompanhamento do pedido, consulta de prestações/pagamentos, renovação/liquidação. |
+| Simulador | 🟢 | `SimulatorPage` (rota `credits/simulator`) com a base de cálculo (prestação/juros/taxas). **Fase 2.2:** simulador **público** em `/credito` (`POST /api/portal/simulate`) reutiliza `buildInstallments` + política de aprovação da empresa e liga à criação direta de um pedido (`Solicitar este crédito`). |
+| Portal público do cliente | 🟠 | **Fase 2.2 entregue:** registo/login públicos (tabela `portal_accounts`, migração `014`, JWT de portal dedicado + lockout após tentativas), simulador público e submissão de pedidos (`SUBMITTED` + `publishAppEvent`) com acompanhamento e linha do tempo em `/credito/pedidos` (ownership por cliente). **Falta (Fase 3):** consulta de prestações/pagamentos, renovação/liquidação no portal. |
 | Pedido de crédito (CREDIT APPLICATION) | 🟠 | Existe `loan_approval_requests` (pedido de aprovação), mas **não** está separado o ciclo *pedido* (`SUBMITTED`→`TRIAGE`) do *crédito* (`loans`). Falta triagem/documentação do pedido. |
 | Triagem (checklist de documentação) | 🔴 | **Ausente.** Sem lista por pedido de documentos pendentes/recebidos/inválidos. |
 | Avaliação | 🟠 | `client_evaluations` já existe (score, decisão, recomendação). Falta **agenda de avaliações** (data/hora/avaliador/localização/anexos) e notificações automáticas. |
